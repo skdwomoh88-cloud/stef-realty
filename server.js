@@ -25,8 +25,16 @@ app.use("/uploads", express.static("uploads"));
 
 connectDB();
 
+const viewingRequestRoutes = require("./routes/viewingRequestRoutes");
+
+const dashboardRoutes = require("./routes/dashboardRoutes");
+
 const propertyRoutes = require("./routes/properties");
 const authRoutes = require("./routes/auth");
+
+const propertySubmissionRoutes = require(
+  "./routes/propertySubmissionRoutes"
+);
 
 app.get("/", (req, res) => {
   res.send("REAL ESTATE API is running...");
@@ -34,7 +42,9 @@ app.get("/", (req, res) => {
 
 app.use("/properties", propertyRoutes);
 app.use("/auth", authRoutes);
-
+app.use("/property-submissions", propertySubmissionRoutes);
+app.use("/viewing-requests", viewingRequestRoutes);
+app.use("/dashboard", dashboardRoutes);
 const PORT = 5000;
 
 app.listen(PORT, () => {

@@ -3,11 +3,74 @@ const Property = require("../models/Property");
 // Get all properties
 const getProperties = async (req, res) => {
   try {
-    const properties = await Property.find();
+    const {
+      location,
+      listingType,
+      propertyType,
+      category,
+      maxPrice,
+      sort,
+    } = req.query;
+
+    const filter = {};
+
+    // Location (case-insensitive)
+    if (location) {
+      filter.location = {
+        $regex: location,
+        $options: "i",
+      };
+    }
+
+    // Sale / Rent
+    if (listingType) {
+      filter.listingType = listingType;
+    }
+
+    // Property Type
+    if (propertyType) {
+      filter.propertyType = propertyType;
+    }
+
+    // Residential / Commercial
+    if (category) {
+      filter.category = category;
+    }
+
+    // Maximum Price
+    if (maxPrice) {
+      filter.price = {
+        $lte: Number(maxPrice),
+      };
+    }
+
+    // Sorting
+    let sortOption = { createdAt: -1 };
+
+    switch (sort) {
+      case "oldest":
+        sortOption = { createdAt: 1 };
+        break;
+
+      case "price-low":
+        sortOption = { price: 1 };
+        break;
+
+      case "price-high":
+        sortOption = { price: -1 };
+        break;
+
+      default:
+        sortOption = { createdAt: -1 };
+    }
+
+    const properties = await Property.find(filter).sort(sortOption);
+
     res.json(properties);
+
   } catch (error) {
     res.status(500).json({
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -19,7 +82,7 @@ const getPropertyById = async (req, res) => {
 
     if (!property) {
       return res.status(404).json({
-        message: "Property not found"
+        message: "Property not found",
       });
     }
 
@@ -27,7 +90,7 @@ const getPropertyById = async (req, res) => {
 
   } catch (error) {
     res.status(500).json({
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -47,7 +110,7 @@ const createProperty = async (req, res) => {
     console.error(error);
 
     res.status(500).json({
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -60,13 +123,13 @@ const updateProperty = async (req, res) => {
       req.body,
       {
         new: true,
-        runValidators: true
+        runValidators: true,
       }
     );
 
     if (!property) {
       return res.status(404).json({
-        message: "Property not found"
+        message: "Property not found",
       });
     }
 
@@ -74,7 +137,7 @@ const updateProperty = async (req, res) => {
 
   } catch (error) {
     res.status(500).json({
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -86,17 +149,17 @@ const deleteProperty = async (req, res) => {
 
     if (!property) {
       return res.status(404).json({
-        message: "Property not found"
+        message: "Property not found",
       });
     }
 
     res.json({
-      message: "Property deleted successfully"
+      message: "Property deleted successfully",
     });
 
   } catch (error) {
     res.status(500).json({
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -140,7 +203,7 @@ const searchProperties = async (req, res) => {
 
   } catch (error) {
     res.status(500).json({
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -151,5 +214,5 @@ module.exports = {
   createProperty,
   updateProperty,
   deleteProperty,
-  searchProperties
+  searchProperties,
 };
