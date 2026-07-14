@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const viewingRequestSchema = new mongoose.Schema(
+const ViewingRequestSchema = new mongoose.Schema(
   {
     property: {
       type: mongoose.Schema.Types.ObjectId,
@@ -14,14 +14,17 @@ const viewingRequestSchema = new mongoose.Schema(
       trim: true,
     },
 
+    email: {
+      type: String,
+      required: true,
+      trim: true,
+      lowercase: true,
+    },
+
     phone: {
       type: String,
       required: true,
-    },
-
-    email: {
-      type: String,
-      default: "",
+      trim: true,
     },
 
     preferredDate: {
@@ -49,6 +52,29 @@ const viewingRequestSchema = new mongoose.Schema(
       ],
       default: "Pending",
     },
+
+    assignedAgent: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "User",
+  default: null,
+},
+
+priority: {
+  type: String,
+  enum: ["Low", "Medium", "High"],
+  default: "Medium",
+},
+
+nextFollowUp: {
+  type: Date,
+  default: null,
+},
+
+internalNotes: {
+  type: String,
+  default: "",
+},
+
   },
   {
     timestamps: true,
@@ -57,5 +83,5 @@ const viewingRequestSchema = new mongoose.Schema(
 
 module.exports = mongoose.model(
   "ViewingRequest",
-  viewingRequestSchema
+  ViewingRequestSchema
 );

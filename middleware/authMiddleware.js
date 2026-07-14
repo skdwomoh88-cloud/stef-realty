@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
-const protect = (req, res, next) => {
+const protect = async (req, res, next) => {
   let token;
 
   if (
@@ -10,12 +11,26 @@ const protect = (req, res, next) => {
     try {
       token = req.headers.authorization.split(" ")[1];
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET
+      );
 
-      req.user = decoded;
+      const user = await User.findById(decoded.id).select("-password");
+
+      if (!user) {
+        return res.status(401).json({
+          message: "User not found.",
+        });
+      }
+
+      req.user = user;
 
       next();
+
     } catch (error) {
+      console.error(error);
+
       return res.status(401).json({
         message: "Not authorized. Invalid token.",
       });
@@ -29,4 +44,17 @@ const protect = (req, res, next) => {
   }
 };
 
-module.exports = { protect };
+const adminOnly = (req, res, next) => {
+  if (req.user.role !== "Admin") {
+    return res.status(403).json({
+      message: "Admin access required.",
+    });
+  }
+
+  next();
+};
+
+module.exports = {
+  protect,
+  adminOnly,
+};

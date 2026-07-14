@@ -3,10 +3,10 @@ const express = require("express");
 const router = express.Router();
 
 const {
-  getDashboardStats,
-  getDashboardAnalytics,
-  getDashboardActivity,
-} = require("../controllers/dashboardController");
+  getUsers,
+  updateUserRole,
+  toggleUserStatus,
+} = require("../controllers/userController");
 
 const {
   protect,
@@ -14,24 +14,24 @@ const {
 } = require("../middleware/authMiddleware");
 
 router.get(
-  "/stats",
+  "/",
   protect,
   adminOnly,
-  getDashboardStats
+  getUsers
 );
 
-router.get(
-  "/analytics",
+router.put(
+  "/:id/role",
   protect,
   adminOnly,
-  getDashboardAnalytics
+  updateUserRole
 );
 
-router.get(
-  "/activity",
+router.put(
+  "/:id/status",
   protect,
   adminOnly,
-  getDashboardActivity
+  toggleUserStatus
 );
 
 module.exports = router;

@@ -10,6 +10,11 @@ const {
   rejectSubmission,
 } = require("../controllers/propertySubmissionController");
 
+const {
+  protect,
+  adminOnly,
+} = require("../middleware/authMiddleware");
+
 // Create submission
 router.post("/", createSubmission);
 
@@ -20,9 +25,18 @@ router.get("/", getSubmissions);
 router.get("/:id", getSubmissionById);
 
 // Approve submission
-router.put("/:id/approve", approveSubmission);
+router.put(
+  "/:id/approve",
+  protect,
+  adminOnly,
+  approveSubmission
+);
 
-// Reject submission
-router.put("/:id/reject", rejectSubmission);
+router.put(
+  "/:id/reject",
+  protect,
+  adminOnly,
+  rejectSubmission
+);
 
 module.exports = router;
