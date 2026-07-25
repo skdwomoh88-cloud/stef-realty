@@ -12,7 +12,7 @@ const {
 
 const {
   protect,
-  adminOnly,
+  authorize,
 } = require("../middleware/authMiddleware");
 
 // Create submission
@@ -28,14 +28,14 @@ router.get("/:id", getSubmissionById);
 router.put(
   "/:id/approve",
   protect,
-  adminOnly,
+  authorize("Admin"),
   approveSubmission
 );
 
 router.put(
   "/:id/reject",
   protect,
-  adminOnly,
+  authorize("Admin"),
   rejectSubmission
 );
 

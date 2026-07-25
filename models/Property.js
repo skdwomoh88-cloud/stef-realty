@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+const PROPERTY_STATUS = require("../constants/propertyStatus");
+const VERIFICATION_STATUS = require("../constants/verificationStatus");
 
 const propertySchema = new mongoose.Schema(
   {
@@ -19,24 +21,9 @@ const propertySchema = new mongoose.Schema(
     },
 
     location: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Location",
       required: true,
-      trim: true,
-    },
-
-    region: {
-      type: String,
-      default: "",
-    },
-
-    city: {
-      type: String,
-      default: "",
-    },
-
-    area: {
-      type: String,
-      default: "",
     },
 
     category: {
@@ -48,16 +35,22 @@ const propertySchema = new mongoose.Schema(
     propertyType: {
       type: String,
       enum: [
-        "House",
-        "Apartment",
-        "Townhouse",
-        "Villa",
-        "Land",
-        "Office",
-        "Shop",
-        "Warehouse",
-        "Hotel",
-      ],
+  "House",
+  "Apartment",
+  "Studio Apartment",
+  "Townhouse",
+  "Villa",
+  "Hostel",
+  "Land",
+  "Office",
+  "Shop",
+  "Warehouse",
+  "Factory",
+  "Hotel",
+  "Guest House",
+  "Commercial Building",
+  "Mixed Use Property",
+],
       default: "House",
     },
 
@@ -97,26 +90,119 @@ const propertySchema = new mongoose.Schema(
       default: false,
     },
 
-    status: {
+    currency: {
       type: String,
-      enum: [
-        "Available",
-        "Sold",
-        "Rented",
-        "Pending",
-      ],
-      default: "Available",
+      default: "GHS",
     },
 
+    status: {
+  type: String,
+  enum: Object.values(PROPERTY_STATUS),
+  default: PROPERTY_STATUS.AVAILABLE,
+},
+
+verificationStatus: {
+  type: String,
+  enum: Object.values(VERIFICATION_STATUS),
+  default: VERIFICATION_STATUS.DRAFT,
+},
+
+owner: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "User",
+},
+
+createdBy: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "User",
+  required: true,
+},
+
+verifiedBy: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "User",
+},
+
+verifiedAt: Date,
+
+publishedAt: Date,
+
+latitude: {
+  type: Number,
+  min: -90,
+  max: 90,
+},
+
+longitude: {
+  type: Number,
+  min: -180,
+  max: 180,
+},
+
+videoUrl: {
+  type: String,
+  default: "",
+},
+
+virtualTourUrl: {
+  type: String,
+  default: "",
+},
+
+amenities: [
+  {
+    type: String,
+  },
+],
+
+inspectionNotes: {
+  type: String,
+  default: "",
+},
+
+negotiable: {
+  type: Boolean,
+  default: false,
+},
+
+isArchived: {
+  type: Boolean,
+  default: false,
+},
+
     images: [
-      {
-        type: String,
-      },
-    ],
+  {
+    url: {
+      type: String,
+      required: true,
+    },
+    isCover: {
+      type: Boolean,
+      default: false,
+    },
+    caption: {
+      type: String,
+      default: "",
+    },
+  },
+],
   },
   {
     timestamps: true,
   }
 );
+
+propertySchema.index({ listingType: 1 });
+propertySchema.index({ propertyType: 1 });
+propertySchema.index({ status: 1 });
+propertySchema.index({ verificationStatus: 1 });
+propertySchema.index({ featured: 1 });
+propertySchema.index({ location: 1 });
+propertySchema.index({ price: 1 });
+
+propertySchema.index({
+  title: "text",
+  description: "text",
+});
 
 module.exports = mongoose.model("Property", propertySchema);

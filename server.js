@@ -14,6 +14,10 @@ const settingsRoutes = require("./routes/settingsRoutes");
 
 const searchRoutes = require("./routes/searchRoutes");
 
+const locationRoutes = require("./routes/locationRoutes");
+
+const errorHandler = require("./middleware/errorMiddleware");
+
 app.use(cors());
 
 app.use(express.json());
@@ -59,7 +63,18 @@ app.use("/settings", settingsRoutes);
 app.use("/users", userRoutes);
 app.use("/notifications", notificationRoutes);
 app.use("/search", searchRoutes);
-const PORT = 5000;
+app.use("/locations", locationRoutes);
+
+app.use((req, res, next) => {
+  const error = new Error(`Route not found: ${req.originalUrl}`);
+  error.statusCode = 404;
+  error.code = "NOT_FOUND";
+  next(error);
+});
+
+app.use(errorHandler);
+
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

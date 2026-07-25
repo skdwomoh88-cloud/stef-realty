@@ -10,27 +10,27 @@ const {
 
 const {
   protect,
-  adminOnly,
+  authorize,
 } = require("../middleware/authMiddleware");
 
 router.get(
   "/stats",
   protect,
-  adminOnly,
+  authorize("Admin"),
   getDashboardStats
 );
 
 router.get(
   "/analytics",
   protect,
-  adminOnly,
+  authorize("Admin"),
   getDashboardAnalytics
 );
 
 router.get(
   "/activity",
   protect,
-  adminOnly,
+  authorize("Admin"),
   getDashboardActivity
 );
 

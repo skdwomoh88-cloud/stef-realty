@@ -1,6 +1,9 @@
 const express = require("express");
 const router = express.Router();
 
+const validateProperty = require("../validators/propertyValidator");
+const validate = require("../middleware/validationMiddleware");
+
 const {
   getProperties,
   getPropertyById,
@@ -10,7 +13,10 @@ const {
   searchProperties
 } = require("../controllers/propertyController");
 
-const { protect } = require("../middleware/authMiddleware");
+const {
+  protect,
+  authorize,
+} = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 
 router.get("/", getProperties);
@@ -22,21 +28,42 @@ router.get("/:id", getPropertyById);
 router.post(
   "/upload",
   protect,
+  authorize("Admin", "Agent"),
   upload.array("images", 10),
   (req, res) => {
     const imageUrls = req.files.map(
-  (file) =>
-    `${req.protocol}://${req.get("host")}/uploads/${file.filename}`
-);
+      (file) =>
+        `${req.protocol}://${req.get("host")}/uploads/${file.filename}`
+    );
 
-res.json(imageUrls);
+    res.json({
+      success: true,
+      data: imageUrls,
+    });
   }
 );
 
-router.post("/", protect, createProperty);
+router.post(
+  "/",
+  protect,
+  authorize("Admin", "Agent"),
+  validateProperty,
+  validate,
+  createProperty
+);
 
-router.put("/:id", protect, updateProperty);
+router.put(
+  "/:id",
+  protect,
+  authorize("Admin", "Agent"),
+  updateProperty
+);
 
-router.delete("/:id", protect, deleteProperty);
+router.delete(
+  "/:id",
+  protect,
+  authorize("Admin"),
+  deleteProperty
+);
 
 module.exports = router;

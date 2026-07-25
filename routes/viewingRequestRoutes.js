@@ -13,7 +13,7 @@ const {
 
 const {
   protect,
-  adminOnly,
+  authorize,
 } = require("../middleware/authMiddleware");
 
 // Public
@@ -26,8 +26,12 @@ router.get(
   getMyViewingRequests
 );
 
-// Admin
-router.get("/", protect, adminOnly, getViewingRequests);
+router.get(
+  "/",
+  protect,
+  authorize("Admin", "Agent"),
+  getViewingRequests
+);
 
 router.get(
   "/:id",
@@ -41,6 +45,11 @@ router.put(
   updateViewingStatus
 );
 
-router.put("/:id", protect, adminOnly, updateViewingRequest);
+router.put(
+  "/:id",
+  protect,
+  authorize("Admin", "Agent"),
+  updateViewingRequest
+);
 
 module.exports = router;

@@ -10,27 +10,27 @@ const {
 
 const {
   protect,
-  adminOnly,
+  authorize,
 } = require("../middleware/authMiddleware");
 
 router.get(
   "/",
   protect,
-  adminOnly,
+  authorize("Admin"),
   getUsers
 );
 
 router.put(
   "/:id/role",
   protect,
-  adminOnly,
+  authorize("Admin"),
   updateUserRole
 );
 
 router.put(
   "/:id/status",
   protect,
-  adminOnly,
+  authorize("Admin"),
   toggleUserStatus
 );
 

@@ -44,17 +44,23 @@ const protect = async (req, res, next) => {
   }
 };
 
-const adminOnly = (req, res, next) => {
-  if (req.user.role !== "Admin") {
-    return res.status(403).json({
-      message: "Admin access required.",
-    });
-  }
+const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: "FORBIDDEN",
+          message: "You do not have permission to perform this action.",
+        },
+      });
+    }
 
-  next();
+    next();
+  };
 };
 
 module.exports = {
   protect,
-  adminOnly,
+  authorize,
 };
