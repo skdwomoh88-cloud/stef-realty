@@ -5,33 +5,44 @@ const router = express.Router();
 const {
   getUsers,
   updateUserRole,
-  toggleUserStatus,
+  updateUserStatus,
+  getRoleDirectory,
 } = require("../controllers/userController");
 
+const { protect } = require("../middleware/authMiddleware");
+const { requirePermission } = require("../middleware/permissionMiddleware");
+const { PERMISSIONS } = require("../constants/permissions");
+const validate = require("../middleware/validationMiddleware");
 const {
-  protect,
-  authorize,
-} = require("../middleware/authMiddleware");
+  updateUserRoleValidator,
+  updateUserStatusValidator,
+} = require("../validators/userValidator");
 
 router.get(
   "/",
   protect,
-  authorize("Admin"),
+  requirePermission(PERMISSIONS.USER_VIEW),
   getUsers
 );
+
+router.get("/roles", protect, requirePermission(PERMISSIONS.USER_ROLE_MANAGE), getRoleDirectory);
 
 router.put(
   "/:id/role",
   protect,
-  authorize("Admin"),
+  requirePermission(PERMISSIONS.USER_ROLE_MANAGE),
+  updateUserRoleValidator,
+  validate,
   updateUserRole
 );
 
 router.put(
   "/:id/status",
   protect,
-  authorize("Admin"),
-  toggleUserStatus
+  requirePermission(PERMISSIONS.USER_STATUS_MANAGE),
+  updateUserStatusValidator,
+  validate,
+  updateUserStatus
 );
 
 module.exports = router;

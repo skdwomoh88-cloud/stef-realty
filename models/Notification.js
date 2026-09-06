@@ -1,13 +1,7 @@
 const mongoose = require("mongoose");
 
-const NotificationSchema = new mongoose.Schema(
+const notificationSchema = new mongoose.Schema(
   {
-    recipient: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-
     title: {
       type: String,
       required: true,
@@ -23,17 +17,23 @@ const NotificationSchema = new mongoose.Schema(
     type: {
       type: String,
       enum: [
-        "ViewingRequest",
-        "PropertySubmission",
         "Property",
+        "Inquiry",
+        "Viewing Request",
+        "Offer",
+        "Deal",
+        "Task",
+        "Feedback",
+        "Property Request",
         "System",
       ],
-      default: "System",
+      required: true,
     },
 
-    link: {
-      type: String,
-      default: "",
+    recipient: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
 
     isRead: {
@@ -41,9 +41,58 @@ const NotificationSchema = new mongoose.Schema(
       default: false,
     },
 
-    createdBy: {
+    relatedProperty: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Property",
+      default: null,
+    },
+
+    relatedInquiry: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Inquiry",
+      default: null,
+    },
+
+    relatedViewingRequest: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ViewingRequest",
+      default: null,
+    },
+
+    relatedOffer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Offer",
+      default: null,
+    },
+
+    relatedDeal: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Deal",
+      default: null,
+    },
+
+    relatedTask: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Task",
+      default: null,
+    },
+
+    relatedFeedback: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Feedback",
+      default: null,
+    },
+
+    relatedPropertyRequest: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PropertyRequest",
+      default: null,
+    },
+
+    relatedPropertySubmission: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PropertySubmission",
+      default: null,
     },
   },
   {
@@ -51,7 +100,4 @@ const NotificationSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model(
-  "Notification",
-  NotificationSchema
-);
+module.exports = mongoose.model("Notification", notificationSchema);

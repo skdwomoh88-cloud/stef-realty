@@ -1,9 +1,16 @@
 const Settings = require("../models/Settings");
+const safeErrorMessage = require("../utils/safeErrorMessage");
+const UPDATABLE_FIELDS = [
+  "companyName", "companyEmail", "companyPhone", "companyAddress", "logo",
+  "heroTitle", "heroSubtitle", "heroDescription", "defaultCurrency",
+  "defaultCountry", "viewingFee", "viewingFeeCurrency",
+];
+const PUBLIC_SETTINGS_SELECT = UPDATABLE_FIELDS.join(" ");
 
 // Get settings
 const getSettings = async (req, res) => {
   try {
-    let settings = await Settings.findOne();
+    let settings = await Settings.findOne().select(PUBLIC_SETTINGS_SELECT);
 
     if (!settings) {
       settings = await Settings.create({});
@@ -13,7 +20,7 @@ const getSettings = async (req, res) => {
 
   } catch (error) {
     res.status(500).json({
-      message: error.message,
+      message: safeErrorMessage(error, "Internal Server Error"),
     });
   }
 };
@@ -27,7 +34,9 @@ const updateSettings = async (req, res) => {
       settings = await Settings.create({});
     }
 
-    Object.assign(settings, req.body);
+    for (const field of UPDATABLE_FIELDS) {
+      if (req.body[field] !== undefined) settings[field] = req.body[field];
+    }
 
     await settings.save();
 
@@ -35,7 +44,7 @@ const updateSettings = async (req, res) => {
 
   } catch (error) {
     res.status(500).json({
-      message: error.message,
+      message: safeErrorMessage(error, "Internal Server Error"),
     });
   }
 };

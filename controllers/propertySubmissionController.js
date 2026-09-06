@@ -1,100 +1,75 @@
-const PropertySubmission = require("../models/PropertySubmission");
-const Property = require("../models/Property");
+const propertySubmissionService = require("../services/propertySubmissionService");
+const { cleanupPropertySubmissionUploads } = require("../middleware/propertySubmissionUploadMiddleware");
+const safeErrorMessage = require("../utils/safeErrorMessage");
+const asyncHandler = require("express-async-handler");
 
 // Create a new submission
 const createSubmission = async (req, res) => {
   try {
-    const submission = await PropertySubmission.create(req.body);
+    const imageUrls = req.files.map((file) =>
+      `${req.protocol}://${req.get("host")}/uploads/property-submissions/${file.filename}`
+    );
+    const submission = await propertySubmissionService.createSubmission(
+      req.body,
+      imageUrls
+    );
 
-    res.status(201).json(submission);
+    res.status(201).json({
+      submissionReference: submission.submissionReference,
+    });
   } catch (error) {
+    await cleanupPropertySubmissionUploads(req.files).catch(() => {});
     res.status(400).json({
-      message: error.message,
+      message: safeErrorMessage(error),
     });
   }
 };
 
 // Get all submissions
-const getSubmissions = async (req, res) => {
-  try {
-    const submissions = await PropertySubmission.find().sort({
-      createdAt: -1,
-    });
-
-    res.json(submissions);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-};
+const getSubmissions = asyncHandler(async (req, res) => {
+  const result = await propertySubmissionService.getSubmissions(req.query, req.user);
+  res.json({ success: true, data: result.submissions, pagination: result.pagination });
+});
 
 // Get one submission
-const getSubmissionById = async (req, res) => {
-  try {
-    const submission = await PropertySubmission.findById(req.params.id);
+const getSubmissionById = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await propertySubmissionService.getSubmissionById(req.params.id, req.user) });
+});
 
-    if (!submission) {
-      return res.status(404).json({
-        message: "Submission not found",
-      });
-    }
+const assignManager = asyncHandler(async (req, res) => {
+  const submission = await propertySubmissionService.assignManager(req.params.id, req.body.assignedManager, req.user, req);
+  res.json({ success: true, message: "Property Submission manager assigned.", data: submission });
+});
 
-    res.json(submission);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-};
+const assignAgent = asyncHandler(async (req, res) => {
+  const submission = await propertySubmissionService.assignAgent(req.params.id, req.body.assignedAgent, req.user, req);
+  res.json({ success: true, message: "Property Submission Agent assigned.", data: submission });
+});
+
+const updateWorkflow = asyncHandler(async (req, res) => {
+  const submission = await propertySubmissionService.updateWorkflow(req.params.id, req.body, req.user, req);
+  res.json({ success: true, message: "Property Submission workflow updated.", data: submission });
+});
+const listEligibleAssignees = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await propertySubmissionService.listEligibleAssignees(req.query.kind, req.user) });
+});
 
 // Approve submission
 const approveSubmission = async (req, res) => {
   try {
-    const submission = await PropertySubmission.findById(
-      req.params.id
-    );
-
-    if (!submission) {
-      return res.status(404).json({
-        message: "Submission not found",
-      });
-    }
-
-    if (submission.status === "Approved") {
-      return res.status(400).json({
-        message: "Submission has already been approved.",
-      });
-    }
-
-    const property = await Property.create({
-      title: submission.title,
-      description: submission.description,
-      price: submission.askingPrice,
-      location: submission.area,
-      region: submission.region,
-      city: submission.city,
-      area: submission.area,
-      category: submission.category,
-      propertyType: submission.propertyType,
-      listingType: submission.listingType,
-      images: submission.images,
-      status: "Available",
-    });
-
-    submission.status = "Approved";
-    submission.approvedProperty = property._id;
-
-    await submission.save();
+    const property =
+      await propertySubmissionService.approveSubmission(
+        req.params.id,
+        req.user
+      );
 
     res.json({
       message: "Submission approved successfully.",
       property,
     });
-
   } catch (error) {
-    res.status(500).json({
-      message: error.message,
+    res.status(400).json({
+      message: safeErrorMessage(error),
     });
   }
 };
@@ -102,27 +77,16 @@ const approveSubmission = async (req, res) => {
 // Reject submission
 const rejectSubmission = async (req, res) => {
   try {
-    const submission = await PropertySubmission.findById(
+    await propertySubmissionService.rejectSubmission(
       req.params.id
     );
-
-    if (!submission) {
-      return res.status(404).json({
-        message: "Submission not found",
-      });
-    }
-
-    submission.status = "Rejected";
-
-    await submission.save();
 
     res.json({
       message: "Submission rejected.",
     });
-
   } catch (error) {
-    res.status(500).json({
-      message: error.message,
+    res.status(400).json({
+      message: safeErrorMessage(error),
     });
   }
 };
@@ -131,6 +95,10 @@ module.exports = {
   createSubmission,
   getSubmissions,
   getSubmissionById,
+  assignManager,
+  assignAgent,
+  updateWorkflow,
+  listEligibleAssignees,
   approveSubmission,
   rejectSubmission,
 };

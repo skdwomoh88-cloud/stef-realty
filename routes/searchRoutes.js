@@ -9,11 +9,15 @@ const {
 const {
   protect,
 } = require("../middleware/authMiddleware");
+const validate = require("../middleware/validationMiddleware");
+const { searchQueryValidator } = require("../validators/queryValidator");
 
 // Global Search
 router.get(
   "/",
   protect,
+  searchQueryValidator,
+  validate,
   globalSearch
 );
 

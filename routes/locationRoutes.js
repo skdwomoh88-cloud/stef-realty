@@ -2,6 +2,13 @@ const express = require("express");
 
 const router = express.Router();
 
+const ROLES = require("../constants/roles");
+
+const {
+  protect,
+  authorize,
+} = require("../middleware/authMiddleware");
+
 const {
   getRegions,
   getCities,
@@ -11,6 +18,11 @@ const {
   updateLocation,
   deleteLocation,
 } = require("../controllers/locationController");
+const validate = require("../middleware/validationMiddleware");
+const {
+  createLocationValidator,
+  updateLocationValidator,
+} = require("../validators/locationValidator");
 
 router.get("/regions", getRegions);
 
@@ -20,10 +32,29 @@ router.get("/areas/:region/:city", getAreas);
 
 router.get("/", getAllLocations);
 
-router.post("/", createLocation);
+router.post(
+  "/",
+  protect,
+  authorize(ROLES.ADMIN),
+  createLocationValidator,
+  validate,
+  createLocation
+);
 
-router.put("/:id", updateLocation);
+router.put(
+  "/:id",
+  protect,
+  authorize(ROLES.ADMIN),
+  updateLocationValidator,
+  validate,
+  updateLocation
+);
 
-router.delete("/:id", deleteLocation);
+router.delete(
+  "/:id",
+  protect,
+  authorize(ROLES.ADMIN),
+  deleteLocation
+);
 
 module.exports = router;

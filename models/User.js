@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { USER_ROLE_VALUES, LEGACY_ROLES } = require("../constants/roleCatalogue");
 
 const UserSchema = new mongoose.Schema({
   name: {
@@ -17,13 +18,21 @@ const UserSchema = new mongoose.Schema({
 
   password: {
     type: String,
-    required: true
+    required: true,
+    select: false
+  },
+
+  authVersion: {
+    type: Number,
+    default: 0,
+    min: 0,
+    select: false,
   },
 
   role: {
   type: String,
-  enum: ["Admin", "Agent", "Owner", "Customer"],
-  default: "Customer",
+  enum: USER_ROLE_VALUES,
+  default: LEGACY_ROLES.CUSTOMER,
 },
 
   isActive: {
@@ -32,7 +41,23 @@ const UserSchema = new mongoose.Schema({
 },
 
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: {
+    transform: (doc, ret) => {
+      delete ret.password;
+      delete ret.authVersion;
+      return ret;
+    },
+  },
+  toObject: {
+    transform: (doc, ret) => {
+      delete ret.password;
+      delete ret.authVersion;
+      return ret;
+    },
+  },
 });
+
+UserSchema.index({ role: 1, isActive: 1 });
 
 module.exports = mongoose.model("User", UserSchema);

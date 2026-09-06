@@ -1,5 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const { normalizeRole } = require("../utils/rbac");
+const { ROLES } = require("../constants/roleCatalogue");
 
 const protect = async (req, res, next) => {
   let token;
@@ -16,11 +18,15 @@ const protect = async (req, res, next) => {
         process.env.JWT_SECRET
       );
 
-      const user = await User.findById(decoded.id).select("-password");
+      const user = await User.findById(decoded.id).select("+authVersion");
 
-      if (!user) {
+      if (!user || !user.isActive || Number(decoded.version || 0) !== Number(user.authVersion || 0)) {
         return res.status(401).json({
-          message: "User not found.",
+          success: false,
+          error: {
+            code: "UNAUTHORIZED",
+            message: "User account is unavailable.",
+          },
         });
       }
 
@@ -29,24 +35,32 @@ const protect = async (req, res, next) => {
       next();
 
     } catch (error) {
-      console.error(error);
-
       return res.status(401).json({
-        message: "Not authorized. Invalid token.",
+        success: false,
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Not authorized. Invalid token.",
+        },
       });
     }
   }
 
   if (!token) {
     return res.status(401).json({
-      message: "Not authorized. No token.",
+      success: false,
+      error: {
+        code: "UNAUTHORIZED",
+        message: "Not authorized. No token.",
+      },
     });
   }
 };
 
 const authorize = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    const currentRole = normalizeRole(req.user?.role);
+    const allowedRoles = roles.map(normalizeRole).filter(Boolean);
+    if (!req.user || (currentRole !== ROLES.SUPER_ADMIN && !allowedRoles.includes(currentRole))) {
       return res.status(403).json({
         success: false,
         error: {

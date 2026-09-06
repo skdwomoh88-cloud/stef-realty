@@ -1,60 +1,73 @@
-const Notification = require("../models/Notification");
+const asyncHandler = require("express-async-handler");
+const notificationService = require("../services/notificationService");
 
-// Get notifications for the logged-in user
-const getMyNotifications = async (req, res) => {
-  try {
-    const notifications = await Notification.find({
-      recipient: req.user._id,
-    })
-      .sort({ createdAt: -1 })
-      .limit(50);
+const createNotification = asyncHandler(async (req, res) => {
+  const notification = await notificationService.createNotification(req.body);
 
-    res.json(notifications);
+  res.status(201).json({
+    success: true,
+    data: notification,
+  });
+});
 
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-};
+const getNotifications = asyncHandler(async (req, res) => {
+  const notifications = await notificationService.getNotifications(req.user._id);
 
-// Mark notification as read
-const markAsRead = async (req, res) => {
-  try {
-    const notification = await Notification.findById(req.params.id);
+  res.json({
+    success: true,
+    data: notifications,
+  });
+});
 
-    if (!notification) {
-      return res.status(404).json({
-        message: "Notification not found.",
-      });
-    }
+const getUnreadNotifications = asyncHandler(async (req, res) => {
+  const notifications = await notificationService.getUnreadNotifications(
+    req.user._id
+  );
 
-    // Users can only mark their own notifications
-    if (
-      notification.recipient.toString() !==
-      req.user._id.toString()
-    ) {
-      return res.status(403).json({
-        message: "Access denied.",
-      });
-    }
+  res.json({
+    success: true,
+    data: notifications,
+  });
+});
 
-    notification.isRead = true;
+const markAsRead = asyncHandler(async (req, res) => {
+  const notification = await notificationService.markAsRead(
+  req.params.id,
+  req.user._id
+);
 
-    await notification.save();
+  res.json({
+    success: true,
+    data: notification,
+  });
+});
 
-    res.json({
-      message: "Notification marked as read.",
-    });
+const markAllAsRead = asyncHandler(async (req, res) => {
+  const result = await notificationService.markAllAsRead(req.user._id);
 
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-};
+  res.json({
+    success: true,
+    data: result,
+  });
+});
+
+const deleteNotification = asyncHandler(async (req, res) => {
+  await notificationService.deleteNotification(
+  req.params.id,
+  req.user._id
+);
+
+  res.json({
+    success: true,
+    message: "Notification deleted successfully.",
+  });
+});
 
 module.exports = {
-  getMyNotifications,
+  createNotification,
+  getNotifications,
+  getUnreadNotifications,
   markAsRead,
+  markAllAsRead,
+  deleteNotification,
 };

@@ -1,16 +1,22 @@
 const express = require("express");
 const router = express.Router();
 
-const validateProperty = require("../validators/propertyValidator");
+const {
+  validateProperty,
+  updatePropertyValidator,
+} = require("../validators/propertyValidator");
 const validate = require("../middleware/validationMiddleware");
+const ROLES = require("../constants/roles");
 
 const {
   getProperties,
   getPropertyById,
+  getPublicProperties,
   createProperty,
   updateProperty,
   deleteProperty,
-  searchProperties
+  searchProperties,
+  getManagementProperties,
 } = require("../controllers/propertyController");
 
 const {
@@ -18,10 +24,28 @@ const {
   authorize,
 } = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
+const { propertyQueryValidator } = require("../validators/queryValidator");
+const { propertyManagementQueryValidator } = require("../validators/frontendListValidator");
 
-router.get("/", getProperties);
+router.get("/", propertyQueryValidator, validate, getProperties);
 
-router.get("/search", searchProperties);
+router.get("/search", propertyQueryValidator, validate, searchProperties);
+
+router.get(
+  "/public",
+  propertyQueryValidator,
+  validate,
+  getPublicProperties
+);
+
+router.get(
+  "/manage",
+  protect,
+  authorize(ROLES.ADMIN, ROLES.AGENT),
+  propertyManagementQueryValidator,
+  validate,
+  getManagementProperties
+);
 
 router.get("/:id", getPropertyById);
 
@@ -29,7 +53,7 @@ router.post(
   "/upload",
   protect,
   authorize("Admin", "Agent"),
-  upload.array("images", 10),
+  upload.array("images", upload.maxFileCount),
   (req, res) => {
     const imageUrls = req.files.map(
       (file) =>
@@ -46,7 +70,7 @@ router.post(
 router.post(
   "/",
   protect,
-  authorize("Admin", "Agent"),
+  authorize(ROLES.ADMIN, ROLES.AGENT),
   validateProperty,
   validate,
   createProperty
@@ -55,14 +79,16 @@ router.post(
 router.put(
   "/:id",
   protect,
-  authorize("Admin", "Agent"),
+  authorize(ROLES.ADMIN, ROLES.AGENT),
+  updatePropertyValidator,
+  validate,
   updateProperty
 );
 
 router.delete(
   "/:id",
   protect,
-  authorize("Admin"),
+  authorize(ROLES.ADMIN),
   deleteProperty
 );
 

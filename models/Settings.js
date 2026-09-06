@@ -52,6 +52,19 @@ const settingsSchema = new mongoose.Schema(
       type: String,
       default: "Ghana",
     },
+
+    viewingFee: {
+      type: Number,
+      min: 0,
+      default: null,
+    },
+
+    viewingFeeCurrency: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      default: null,
+    },
   },
   {
     timestamps: true,

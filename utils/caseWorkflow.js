@@ -1,0 +1,59 @@
+const CASE_STATUS = require("../constants/caseStatus");
+
+const allowedTransitions = {
+  [CASE_STATUS.NEW_LEAD]: [
+    CASE_STATUS.OWNER_CONTACTED,
+    CASE_STATUS.CANCELLED,
+  ],
+
+  [CASE_STATUS.OWNER_CONTACTED]: [
+    CASE_STATUS.INSPECTION_SCHEDULED,
+    CASE_STATUS.CANCELLED,
+  ],
+
+  [CASE_STATUS.INSPECTION_SCHEDULED]: [
+    CASE_STATUS.INSPECTION_COMPLETED,
+    CASE_STATUS.CANCELLED,
+  ],
+
+  [CASE_STATUS.INSPECTION_COMPLETED]: [
+    CASE_STATUS.LISTING_DRAFT,
+    CASE_STATUS.CANCELLED,
+  ],
+
+  [CASE_STATUS.LISTING_DRAFT]: [
+    CASE_STATUS.PENDING_APPROVAL,
+    CASE_STATUS.CANCELLED,
+  ],
+
+  [CASE_STATUS.PENDING_APPROVAL]: [
+    CASE_STATUS.PUBLISHED,
+    CASE_STATUS.CANCELLED,
+  ],
+
+  [CASE_STATUS.PUBLISHED]: [
+    CASE_STATUS.SOLD,
+    CASE_STATUS.RENTED,
+    CASE_STATUS.CLOSED,
+  ],
+
+  [CASE_STATUS.SOLD]: [
+    CASE_STATUS.CLOSED,
+  ],
+
+  [CASE_STATUS.RENTED]: [
+    CASE_STATUS.CLOSED,
+  ],
+
+  [CASE_STATUS.CLOSED]: [],
+
+  [CASE_STATUS.CANCELLED]: [],
+};
+
+const canTransition = (currentStatus, nextStatus) => {
+  return allowedTransitions[currentStatus]?.includes(nextStatus);
+};
+
+module.exports = {
+  canTransition,
+};

@@ -58,4 +58,4 @@ const ghanaLocations = {
   },
 };
 
-export default ghanaLocations;
+module.exports = ghanaLocations;

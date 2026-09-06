@@ -1,81 +1,72 @@
 require("dotenv").config();
 
+const app = require("./app");
 const connectDB = require("./config/db");
-
-const path = require("path");
-
-const express = require("express");
-
-const cors = require("cors");
-
-const app = express();
-
-const settingsRoutes = require("./routes/settingsRoutes");
-
-const searchRoutes = require("./routes/searchRoutes");
-
-const locationRoutes = require("./routes/locationRoutes");
-
-const errorHandler = require("./middleware/errorMiddleware");
-
-app.use(cors());
-
-app.use(express.json());
-
-app.use(express.urlencoded({ extended: true }));
-
-app.use(
-  "/uploads",
-  express.static(path.join(__dirname, "uploads"))
-);
-
-app.use("/uploads", express.static("uploads"));
-
-connectDB();
-
-const viewingRequestRoutes = require("./routes/viewingRequestRoutes");
-
-const dashboardRoutes = require("./routes/dashboardRoutes");
-
-const propertyRoutes = require("./routes/properties");
-const authRoutes = require("./routes/auth");
-
-const propertySubmissionRoutes = require(
-  "./routes/propertySubmissionRoutes"
-);
-
-const userRoutes = require("./routes/userRoutes");
-
-const notificationRoutes = require(
-  "./routes/notificationRoutes"
-);
-
-app.get("/", (req, res) => {
-  res.send("REAL ESTATE API is running...");
-});
-
-app.use("/properties", propertyRoutes);
-app.use("/auth", authRoutes);
-app.use("/property-submissions", propertySubmissionRoutes);
-app.use("/viewing-requests", viewingRequestRoutes);
-app.use("/dashboard", dashboardRoutes);
-app.use("/settings", settingsRoutes);
-app.use("/users", userRoutes);
-app.use("/notifications", notificationRoutes);
-app.use("/search", searchRoutes);
-app.use("/locations", locationRoutes);
-
-app.use((req, res, next) => {
-  const error = new Error(`Route not found: ${req.originalUrl}`);
-  error.statusCode = 404;
-  error.code = "NOT_FOUND";
-  next(error);
-});
-
-app.use(errorHandler);
+const mongoose = require("mongoose");
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+const startServer = async () => {
+  if (!process.env.MONGO_URI) {
+    throw new Error("MONGO_URI is required");
+  }
+
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET is required");
+  }
+
+  await connectDB();
+
+  return app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+};
+
+if (require.main === module) {
+  let server;
+  let shuttingDown = false;
+
+  const shutdown = async (reason, exitCode = 0) => {
+    if (shuttingDown) {
+      return;
+    }
+
+    shuttingDown = true;
+    console.log(`Shutting down: ${reason}`);
+
+    try {
+      if (server) {
+        await new Promise((resolve, reject) => {
+          server.close((error) => (error ? reject(error) : resolve()));
+        });
+      }
+
+      await mongoose.disconnect();
+    } catch (error) {
+      console.error(`Shutdown failed: ${error.message}`);
+      exitCode = 1;
+    } finally {
+      process.exitCode = exitCode;
+    }
+  };
+
+  process.once("SIGTERM", () => shutdown("SIGTERM"));
+  process.once("SIGINT", () => shutdown("SIGINT"));
+  process.once("unhandledRejection", (error) => {
+    console.error(`Unhandled rejection: ${error.message}`);
+    shutdown("unhandled rejection", 1);
+  });
+  process.once("uncaughtException", (error) => {
+    console.error(`Uncaught exception: ${error.message}`);
+    shutdown("uncaught exception", 1);
+  });
+
+  startServer().then((startedServer) => {
+    server = startedServer;
+  }).catch((error) => {
+    console.error(`Failed to start server: ${error.message}`);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = { startServer };

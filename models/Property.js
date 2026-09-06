@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const PROPERTY_STATUS = require("../constants/propertyStatus");
 const VERIFICATION_STATUS = require("../constants/verificationStatus");
+const PROPERTY_VERIFICATION_STATUS = require("../constants/propertyVerificationStatus");
+const PROPERTY_TYPES = require("../constants/propertyTypes");
 
 const propertySchema = new mongoose.Schema(
   {
@@ -34,23 +36,7 @@ const propertySchema = new mongoose.Schema(
 
     propertyType: {
       type: String,
-      enum: [
-  "House",
-  "Apartment",
-  "Studio Apartment",
-  "Townhouse",
-  "Villa",
-  "Hostel",
-  "Land",
-  "Office",
-  "Shop",
-  "Warehouse",
-  "Factory",
-  "Hotel",
-  "Guest House",
-  "Commercial Building",
-  "Mixed Use Property",
-],
+      enum: PROPERTY_TYPES,
       default: "House",
     },
 
@@ -103,8 +89,8 @@ const propertySchema = new mongoose.Schema(
 
 verificationStatus: {
   type: String,
-  enum: Object.values(VERIFICATION_STATUS),
-  default: VERIFICATION_STATUS.DRAFT,
+  enum: Object.values(PROPERTY_VERIFICATION_STATUS),
+  default: PROPERTY_VERIFICATION_STATUS.DRAFT,
 },
 
 owner: {
@@ -116,6 +102,11 @@ createdBy: {
   type: mongoose.Schema.Types.ObjectId,
   ref: "User",
   required: true,
+},
+
+assignedAgent: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "User",
 },
 
 verifiedBy: {

@@ -1,11 +1,12 @@
 const Location = require("../models/Location");
+const safeErrorMessage = require("../utils/safeErrorMessage");
 
 const createLocation = async (req, res) => {
   try {
     const location = await Location.create(req.body);
     res.status(201).json(location);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(400).json({ message: safeErrorMessage(err) });
   }
 };
 
@@ -23,7 +24,7 @@ const updateLocation = async (req, res) => {
 
     res.json(location);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(400).json({ message: safeErrorMessage(err) });
   }
 };
 
@@ -37,7 +38,7 @@ const deleteLocation = async (req, res) => {
 
     res.json({ message: "Location deleted" });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(400).json({ message: safeErrorMessage(err) });
   }
 };
 
@@ -68,7 +69,7 @@ const getAllLocations = async (req, res) => {
   } catch (err) {
 
     res.status(500).json({
-      message: err.message,
+      message: safeErrorMessage(err, "Internal Server Error"),
     });
 
   }
